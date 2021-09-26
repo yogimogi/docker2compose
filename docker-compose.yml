@@ -1,0 +1,53 @@
+services:
+  dbserver:
+    image: yo-db
+    environment:
+      - POSTGRES_PASSWORD=Admin@123
+    networks:
+      - yo-network
+    mem_limit: 100M
+
+  redisserver:
+    image: redis
+    networks:
+      - yo-network
+    mem_limit: 10M
+
+  appserver1:
+    image: yo-appserver1
+    environment:
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=Admin@123
+      - DB_HOST=dbserver
+      - REDIS_HOST=redisserver
+    networks:
+      - yo-network
+    depends_on:
+      - dbserver
+      - redisserver
+    mem_limit: 200M
+
+  appserver2:
+    image: yo-appserver2
+    volumes:
+      - ./appserver2/.env-dev:/opt/appserver2.env
+    networks:
+      - yo-network
+    depends_on:
+      - dbserver
+    mem_limit: 50M
+
+  webapp:
+    image: yo-web
+    networks:
+      - yo-network
+    depends_on:
+      - appserver1
+      - appserver2
+    mem_limit: 50M
+    ports:
+      - "80:80"
+
+networks:
+  yo-network:
