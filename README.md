@@ -143,17 +143,49 @@ Though the approach of using docker command line is easy to get started with, it
 
 Go to the base directory of the repository and run below command. This command reads contents of docker-compose.yml file where we have modelled our application. This file pretty much has everything we had specified when we ran each container using **docker run**, but in addition, it has few more things
 
-- It specifies dependencies between containers using **depends_on**. When you say appserver1 depends on dbserver and redisserver, docker-compose will start appserver1 container only after dbserver and redisserver containers have started. But **depends_on** doesn't and can't really guarantee that database server inside dbserver container is up and running before starting appserver1 container.
+- It specifies dependencies between containers using **depends_on**. When you say, appserver1 depends on dbserver and redisserver, docker-compose will start appserver1 container only after dbserver and redisserver containers have started. But **depends_on** doesn't and can't really guarantee that database server inside dbserver container is up and running before starting appserver1 container.
 - With **scale: 2** for appserver1, it is telling docker to start 2 instances of appserver1 container
-
-Command below will bring up all the containers in the detached mode indiated by -d flag. As noted earlier, chances are, there might be failure in
 
 ```
 docker-compose up -d
 ```
 
+Every resource docker-compose creates has a name starting with directory name where you are running the command. In our case, all the resource names will start with **docker2compose\_** as we are running docker-compose command from docker2compose directory. As we can scale a container to run multiple instances, every container name has \_1, \_2 etc. in its name at the end. So appserver1 container names would be docker2compose_appserver1_1 and docker2compose_appserver1_2. Command above will bring up all the containers in the detached mode indiated by -d flag. As noted earlier, chances are, there might be failure in starting appserver1 or appserver2. If you run below command, you might see an error.
+
+```
+docker logs docker2compose_appserver2_1
+# Error thrown by Go application as it can't connect to the database
+2021/09/27 05:44:12 Could not set up database: dial tcp 172.25.0.3:5432: connect: connection refused
+```
+
+But now, you can again run the same command and docker-compose will try to achieve desired application state as specified in docker-compose.yml file.
+
+```
+docker-compose up -d
+# run above command again and you should see 6 containers running eventually
+# as the output of below command
+docker ps | grep docker2compose
+```
+
+You can access the application [webapp](http://localhost/) and make sure it's working correctly. Let's verify that requests are being sent to both the instances of appserver1 container. Start 2 terminals and run commands below, one on each terminal. Visit [page3](http://localhost/page3) and keep clicking on "Invoke" button
+
+```
+docker logs -f docker2compose_appserver1_1
+docker logs -f docker2compose_appserver1_2
+```
+
+You will see log messsages of the form { "GET /cache/limit HTTP/1.1" 200 35 } on both the terminals. How does this work? This happens through round-robin DNS load balancing. docker2compose_webapp_1 container is still using appserver1 as hostname to connect to appserver1 containers. Run below commands and you will see 2 IP addresses for appserver1. docker2compose_webapp_1 is basically sending requests to each of them in the round-robin fashion.
+
+```
+docker exec -it  docker2compose_webapp_1 sh
+nslookup appserver1
+```
+
+This entire setup can be torn down with just one command.
+
 ```
 docker-compose down
 ```
 
-Docker-compose is strictly a client side tool. What it means is, it just uses underlying docker APIs to get the job done. It deals only with one docker engine/server. So though it has some advantages, it can’t really be used for production workloads. You can’t really have a deployment which spans multiple docker servers. That’s why for production loads, orchestration comes into picture.
+Though docker-compose is better than running individual docker commands and good for setting up development environments, it
+strictly is a client side tool. What it means is, it just uses underlying docker APIs to get the job done. It deals only with one docker engine/server. So though it has some advantages, it can’t really be used for production workloads. You can’t really have a deployment which spans multiple docker servers. That’s why for production loads, container orchestration engines like Docker Swarm and Kubernetes come into picture.
