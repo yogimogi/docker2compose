@@ -1,3 +1,5 @@
+version: "3.7"
+
 services:
   dbserver:
     image: yo-db
@@ -27,7 +29,8 @@ services:
       - dbserver
       - redisserver
     mem_limit: 200M
-    scale: 2
+    deploy:
+      replicas: 2
 
   appserver2:
     image: yo-appserver2
@@ -39,16 +42,16 @@ services:
       - dbserver
     mem_limit: 50M
 
-  webapp:
-    image: yo-web
-    networks:
-      - yo-network
-    depends_on:
-      - appserver1
-      - appserver2
-    mem_limit: 50M
-    ports:
-      - "80:80"
+webapp:
+  image: yo-web
+  networks:
+    - yo-network
+  depends_on:
+    - appserver1
+    - appserver2
+  mem_limit: 50M
+  ports:
+    - "80:80"
 
 networks:
   yo-network:

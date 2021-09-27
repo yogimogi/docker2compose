@@ -144,7 +144,7 @@ Though the approach of using docker command line is easy to get started with, it
 Go to the base directory of the repository and run below command. This command reads contents of docker-compose.yml file where we have modelled our application. This file pretty much has everything we had specified when we ran each container using **docker run**, but in addition, it has few more things
 
 - It specifies dependencies between containers using **depends_on**. When you say, appserver1 depends on dbserver and redisserver, docker-compose will start appserver1 container only after dbserver and redisserver containers have started. But **depends_on** doesn't and can't really guarantee that database server inside dbserver container is up and running before starting appserver1 container.
-- With **scale: 2** for appserver1, it is telling docker to start 2 instances of appserver1 container
+- With **replicas: 2** for appserver1, it is telling docker to start 2 instances of appserver1 container
 
 ```
 docker-compose up -d
