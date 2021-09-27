@@ -27,6 +27,7 @@ services:
       - dbserver
       - redisserver
     mem_limit: 200M
+    scale: 2
 
   appserver2:
     image: yo-appserver2
