@@ -1,5 +1,5 @@
 # Build the react app inside a node based container image
-FROM node:latest as buildstage
+FROM node:16.14.0 as buildstage
 LABEL author="Yogesh Ketkar"
 WORKDIR /webapp
 COPY . .
